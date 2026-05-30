@@ -1,0 +1,649 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Smart Lamp Dashboard</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+
+body{
+    min-height:100vh;
+    background:linear-gradient(-45deg,#0f172a,#1e293b,#312e81,#0f172a);
+    background-size:400% 400%;
+    animation:bgMove 15s ease infinite;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+    color:white;
+}
+
+@keyframes bgMove{
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+}
+
+.glass{
+    width:100%;
+    max-width:600px;
+    backdrop-filter:blur(20px);
+    background:rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.15);
+    border-radius:25px;
+    padding:25px;
+    box-shadow:0 0 30px rgba(0,0,0,.4);
+}
+
+.lamp{
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    background:#333;
+    margin:auto;
+    transition:.4s;
+}
+
+.lamp.on{
+    background:#ffd700;
+    box-shadow:
+    0 0 20px #ffd700,
+    0 0 50px #ffd700,
+    0 0 90px #ffd700;
+}
+
+.stat-box{
+    background:rgba(255,255,255,.08);
+    padding:15px;
+    border-radius:15px;
+}
+
+.dark-mode{
+    background:#000 !important;
+}
+
+.dark-mode .glass{
+    background:rgba(0,0,0,.5);
+}
+
+.progress{
+    height:25px;
+}
+
+input,
+select{
+    margin-top:10px;
+}
+
+</style>
+</head>
+<body>
+
+<div class="glass">
+
+<h2 class="text-center mb-4">
+<i class="bi bi-lightbulb-fill text-warning"></i>
+Smart Lamp Dashboard
+</h2>
+
+<div class="text-center mb-3">
+
+<span id="connectionBadge"
+class="badge bg-secondary">
+
+<i class="bi bi-wifi"></i>
+Disconnected
+
+</span>
+
+</div>
+
+<div id="lamp" class="lamp"></div>
+
+<h4 id="status"
+class="text-center mt-3">
+Status: Belum Terhubung
+</h4>
+
+<hr>
+
+<label>Token Blynk</label>
+
+<input
+type="text"
+id="tokenInput"
+class="form-control"
+placeholder="Masukkan Auth Token">
+
+<button
+class="btn btn-primary w-100 mt-2"
+onclick="saveToken()">
+
+<i class="bi bi-key"></i>
+Simpan Token
+
+</button>
+
+<hr>
+
+<div class="row g-2">
+
+<div class="col-6">
+<button
+class="btn btn-success w-100"
+onclick="lampOn()">
+
+<i class="bi bi-lightbulb-fill"></i>
+ON
+
+</button>
+</div>
+
+<div class="col-6">
+<button
+class="btn btn-danger w-100"
+onclick="lampOff()">
+
+<i class="bi bi-power"></i>
+OFF
+
+</button>
+</div>
+
+</div>
+
+<hr>
+
+<h5>Timer Otomatis Mati</h5>
+
+<select
+id="timer"
+class="form-select">
+
+<option value="0">Pilih Timer</option>
+<option value="1">1 Menit</option>
+<option value="5">5 Menit</option>
+<option value="10">10 Menit</option>
+<option value="30">30 Menit</option>
+
+</select>
+
+<button
+class="btn btn-warning w-100 mt-2"
+onclick="startTimer()">
+
+<i class="bi bi-clock"></i>
+Mulai Timer
+
+</button>
+
+<div class="progress mt-3">
+
+<div
+id="timerProgress"
+class="progress-bar progress-bar-striped progress-bar-animated"
+style="width:0%">
+
+0%
+
+</div>
+
+</div>
+
+<div
+id="timerInfo"
+class="mt-2 text-warning text-center">
+</div>
+
+<hr>
+
+<h5>Jadwal Harian Otomatis</h5>
+
+<div class="row">
+
+<div class="col-6">
+
+<label>Jam ON</label>
+
+<input
+type="time"
+id="onTime"
+class="form-control">
+
+</div>
+
+<div class="col-6">
+
+<label>Jam OFF</label>
+
+<input
+type="time"
+id="offTime"
+class="form-control">
+
+</div>
+
+</div>
+
+<button
+class="btn btn-info w-100 mt-2"
+onclick="saveSchedule()">
+
+<i class="bi bi-calendar-check"></i>
+Simpan Jadwal
+
+</button>
+
+<hr>
+
+<div class="row text-center">
+
+<div class="col-4">
+<div class="stat-box">
+<h4 id="totalOn">0</h4>
+<small>Total ON</small>
+</div>
+</div>
+
+<div class="col-4">
+<div class="stat-box">
+<h4 id="timerCount">0</h4>
+<small>Timer</small>
+</div>
+</div>
+
+<div class="col-4">
+<div class="stat-box">
+<h4 id="uptime">0</h4>
+<small>Menit ON</small>
+</div>
+</div>
+
+</div>
+
+<hr>
+
+<div class="form-check form-switch">
+
+<input
+class="form-check-input"
+type="checkbox"
+id="darkSwitch">
+
+<label class="form-check-label">
+Dark Mode
+</label>
+
+</div>
+
+</div>
+
+<div
+class="toast position-fixed bottom-0 end-0 m-3"
+id="toast">
+
+<div class="toast-body text-dark"
+id="toastText">
+Info
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+let token =
+localStorage.getItem("blynkToken") || "";
+
+const pin = "V0";
+
+let countdown;
+
+let totalOn =
+parseInt(localStorage.getItem("totalOn")) || 0;
+
+let timerCount =
+parseInt(localStorage.getItem("timerCount")) || 0;
+
+let uptime =
+parseInt(localStorage.getItem("uptime")) || 0;
+
+function showToast(text){
+
+document.getElementById("toastText")
+.innerText = text;
+
+new bootstrap.Toast(
+document.getElementById("toast")
+).show();
+
+}
+
+function saveToken(){
+
+token =
+document.getElementById("tokenInput")
+.value.trim();
+
+if(!token){
+showToast("Masukkan token");
+return;
+}
+
+localStorage.setItem(
+"blynkToken",
+token
+);
+
+showToast("Token disimpan");
+
+getStatus();
+
+}
+
+function updateStats(){
+
+document.getElementById("totalOn")
+.innerText = totalOn;
+
+document.getElementById("timerCount")
+.innerText = timerCount;
+
+document.getElementById("uptime")
+.innerText = uptime;
+
+localStorage.setItem(
+"totalOn",
+totalOn
+);
+
+localStorage.setItem(
+"timerCount",
+timerCount
+);
+
+localStorage.setItem(
+"uptime",
+uptime
+);
+
+}
+
+function updateUI(state){
+
+const lamp =
+document.getElementById("lamp");
+
+const status =
+document.getElementById("status");
+
+if(state){
+
+lamp.classList.add("on");
+
+status.innerHTML =
+"Status: Lampu Menyala";
+
+}else{
+
+lamp.classList.remove("on");
+
+status.innerHTML =
+"Status: Lampu Mati";
+
+}
+
+}
+
+async function lampOn(){
+
+if(!token) return;
+
+await fetch(
+`https://blynk.cloud/external/api/update?token=${token}&${pin}=1`
+);
+
+updateUI(true);
+
+totalOn++;
+
+updateStats();
+
+showToast("Lampu ON");
+
+}
+
+async function lampOff(){
+
+if(!token) return;
+
+await fetch(
+`https://blynk.cloud/external/api/update?token=${token}&${pin}=0`
+);
+
+updateUI(false);
+
+showToast("Lampu OFF");
+
+}
+
+async function getStatus(){
+
+if(!token) return;
+
+try{
+
+let res =
+await fetch(
+`https://blynk.cloud/external/api/get?token=${token}&${pin}`
+);
+
+let data =
+await res.text();
+
+document
+.getElementById("connectionBadge")
+.className =
+"badge bg-success";
+
+document
+.getElementById("connectionBadge")
+.innerHTML =
+'<i class="bi bi-wifi"></i> Connected';
+
+updateUI(data=="1");
+
+}catch{
+
+document
+.getElementById("connectionBadge")
+.className =
+"badge bg-danger";
+
+document
+.getElementById("connectionBadge")
+.innerHTML =
+'<i class="bi bi-wifi-off"></i> Offline';
+
+}
+
+}
+
+function startTimer(){
+
+let minute =
+parseInt(
+document.getElementById("timer")
+.value
+);
+
+if(minute===0) return;
+
+timerCount++;
+
+updateStats();
+
+lampOn();
+
+let total =
+minute * 60;
+
+let current =
+total;
+
+clearInterval(countdown);
+
+countdown =
+setInterval(()=>{
+
+current--;
+
+let percent =
+(current/total)*100;
+
+document
+.getElementById("timerProgress")
+.style.width =
+percent+"%";
+
+document
+.getElementById("timerProgress")
+.innerHTML =
+Math.round(percent)+"%";
+
+let m =
+Math.floor(current/60);
+
+let s =
+current%60;
+
+document
+.getElementById("timerInfo")
+.innerHTML =
+`${m}:${String(s).padStart(2,'0')}`;
+
+if(current<=0){
+
+clearInterval(countdown);
+
+lampOff();
+
+document
+.getElementById("timerInfo")
+.innerHTML =
+"Timer selesai";
+
+}
+
+},1000);
+
+}
+
+function saveSchedule(){
+
+localStorage.setItem(
+"onTime",
+document.getElementById("onTime").value
+);
+
+localStorage.setItem(
+"offTime",
+document.getElementById("offTime").value
+);
+
+showToast("Jadwal disimpan");
+
+}
+
+function checkSchedule(){
+
+let now = new Date();
+
+let current =
+String(now.getHours()).padStart(2,'0')
++
+":"
++
+String(now.getMinutes()).padStart(2,'0');
+
+let onTime =
+localStorage.getItem("onTime");
+
+let offTime =
+localStorage.getItem("offTime");
+
+if(onTime && current===onTime){
+lampOn();
+}
+
+if(offTime && current===offTime){
+lampOff();
+}
+
+}
+
+document
+.getElementById("darkSwitch")
+.addEventListener("change",e=>{
+
+document.body.classList.toggle(
+"dark-mode",
+e.target.checked
+);
+
+});
+
+window.onload=()=>{
+
+document
+.getElementById("tokenInput")
+.value = token;
+
+document
+.getElementById("onTime")
+.value =
+localStorage.getItem("onTime") || "";
+
+document
+.getElementById("offTime")
+.value =
+localStorage.getItem("offTime") || "";
+
+updateStats();
+
+getStatus();
+
+};
+
+setInterval(getStatus,3000);
+
+setInterval(checkSchedule,1000);
+
+setInterval(()=>{
+
+const lamp =
+document
+.getElementById("lamp");
+
+if(lamp.classList.contains("on")){
+
+uptime++;
+
+updateStats();
+
+}
+
+},60000);
+
+</script>
+
+</body>
+</html>
+```
